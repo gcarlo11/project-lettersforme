@@ -1,47 +1,66 @@
 'use client'
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+// Import useParams
+import { useRouter, useParams } from 'next/navigation';
 import { Heart, Music } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import SpotifyEmbed from '@/components/SpotifyEmbed';
+import { Caveat } from 'next/font/google';
 
-export default function MessagePage({ params }) {
+const caveat = Caveat({ subsets: ['latin'], weight: '400' });
+
+// Hapus 'params' dari props function
+export default function MessagePage() {
+  // Gunakan useParams untuk mendapatkan parameter rute
+  const params = useParams();
+  const id = params.id; // Ekstrak id dari params
+
   const [message, setMessage] = useState(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    loadMessage();
-  }, [params.id]);
+    // Pastikan 'id' ada sebelum memuat data
+    if (id) {
+      loadMessage(id); // Kirim 'id' sebagai argumen
+    }
+  // Tambahkan 'id' sebagai dependency
+  }, [id]);
 
-  const loadMessage = async () => {
+  // Modifikasi fungsi untuk menerima 'messageId'
+  const loadMessage = async (messageId) => {
     try {
       const { data, error } = await supabase
         .from('messages')
         .select('*')
-        .eq('id', params.id)
+        // Gunakan 'messageId' di sini
+        .eq('id', messageId)
         .single();
 
       if (error) throw error;
       setMessage(data);
     } catch (error) {
       console.error('Error loading message:', error);
+      // Mungkin arahkan ke halaman error atau not found
     } finally {
       setLoading(false);
     }
   };
 
   const toggleLike = async () => {
-    if (!message) return;
-    
+    // Pastikan 'id' ada dan message sudah dimuat
+    if (!id || !message) return;
+
     try {
       const { error } = await supabase
         .from('messages')
         .update({ liked: !message.liked })
-        .eq('id', params.id);
+        // Gunakan 'id' di sini
+        .eq('id', id);
 
       if (error) throw error;
+      // Perbarui state lokal secara langsung
       setMessage({ ...message, liked: !message.liked });
     } catch (error) {
       console.error('Error updating like:', error);
@@ -76,6 +95,7 @@ export default function MessagePage({ params }) {
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 p-4">
       <div className="max-w-lg mx-auto pt-8">
         <button
+          // Navigasi kembali ke session page menggunakan session_id dari message
           onClick={() => router.push(`/session/${message.session_id}`)}
           className="mb-6 text-gray-600 hover:text-gray-800"
         >
@@ -100,7 +120,7 @@ export default function MessagePage({ params }) {
           </div>
 
           <div className="prose prose-sm max-w-none mb-6">
-            <p className="text-gray-700 whitespace-pre-wrap">{message.message}</p>
+            <p className={`text-gray-700 text-2xl whitespace-pre-wrap ${caveat.className}`}>{message.message}</p>
           </div>
 
           <SpotifyEmbed url={message.spotify_url} />

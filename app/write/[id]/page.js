@@ -1,13 +1,19 @@
 'use client'
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+// Import useParams
+import { useRouter, useParams } from 'next/navigation';
 import { Send } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 const moods = ['Happy', 'Sad', 'Nostalgic', 'Grateful', 'Hopeful'];
 
-export default function WritePage({ params }) {
+// Hapus 'params' dari props function
+export default function WritePage() {
+  // Gunakan useParams untuk mendapatkan parameter rute
+  const params = useParams();
+  const id = params.id; // Ekstrak id dari params
+
   const [session, setSession] = useState(null);
   const [formData, setFormData] = useState({
     senderName: '',
@@ -20,35 +26,44 @@ export default function WritePage({ params }) {
   const router = useRouter();
 
   useEffect(() => {
-    loadSession();
-  }, [params.id]);
+    // Pastikan 'id' ada sebelum memuat data
+    if (id) {
+      loadSession(id); // Kirim 'id' sebagai argumen
+    }
+  // Tambahkan 'id' sebagai dependency
+  }, [id]);
 
-  const loadSession = async () => {
+  // Modifikasi fungsi untuk menerima 'sessionId'
+  const loadSession = async (sessionId) => {
     try {
       const { data, error } = await supabase
         .from('sessions')
         .select('*')
-        .eq('session_id', params.id)
+        // Gunakan 'sessionId' di sini
+        .eq('session_id', sessionId)
         .single();
 
       if (error) throw error;
       setSession(data);
     } catch (error) {
       console.error('Error loading session:', error);
+      // Arahkan ke halaman utama jika sesi tidak ditemukan
       router.push('/');
     }
   };
 
   const submitMessage = async () => {
-    if (!formData.message.trim()) return;
-    
+    // Pastikan 'id' ada dan pesan tidak kosong
+    if (!id || !formData.message.trim()) return;
+
     setLoading(true);
     try {
       const { error } = await supabase
         .from('messages')
         .insert([
           {
-            session_id: params.id,
+            // Gunakan 'id' di sini
+            session_id: id,
             sender_name: formData.senderName.trim() || 'Anonymous',
             message: formData.message.trim(),
             spotify_url: formData.spotifyUrl.trim() || null,
@@ -57,18 +72,21 @@ export default function WritePage({ params }) {
         ]);
 
       if (error) throw error;
-      
+
       setSubmitted(true);
       setTimeout(() => {
-        router.push(`/session/${params.id}`);
+        // Gunakan 'id' di sini
+        router.push(`/session/${id}`);
       }, 2000);
     } catch (error) {
       console.error('Error submitting message:', error);
-      alert('Terjadi kesalahan. Coba lagi.');
+      alert('Terjadi kesalahan. Coba lagi.'); // Pertimbangkan untuk mengganti ini dengan notifikasi yang lebih baik
     } finally {
       setLoading(false);
     }
   };
+
+  // ... (sisa kode komponen)
 
   if (!session) {
     return (
@@ -90,11 +108,13 @@ export default function WritePage({ params }) {
     );
   }
 
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 p-4">
       <div className="max-w-lg mx-auto pt-8">
         <button
-          onClick={() => router.push(`/session/${params.id}`)}
+          // Gunakan 'id' di sini
+          onClick={() => router.push(`/session/${id}`)}
           className="mb-6 text-gray-600 hover:text-gray-800"
         >
           ← Back

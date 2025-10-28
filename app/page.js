@@ -4,6 +4,9 @@ import { useState } from 'react';
 import { Mail } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
+import { Caveat } from 'next/font/google';
+
+const caveat = Caveat({ subsets: ['latin'], weight: '700' });
 
 export default function Home() {
   const [name, setName] = useState('');
@@ -44,7 +47,7 @@ export default function Home() {
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
           <Mail className="w-16 h-16 mx-auto mb-4 text-purple-400" />
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">Lettersforme</h1>
+          <h1 className={`text-5xl text-bold text-gray-800 mb-2 ${caveat.className}`}>Letters For Me</h1>
           <p className="text-gray-600">Write. Listen. Feel.</p>
         </div>
         
@@ -68,7 +71,7 @@ export default function Home() {
             disabled={loading || !name.trim()}
             className="w-full bg-gradient-to-r from-purple-400 to-pink-400 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Creating...' : 'Create My Lettersforme Page'}
+            {loading ? 'Creating...' : 'Create My LettersForMe Page'}
           </button>
         </div>
         

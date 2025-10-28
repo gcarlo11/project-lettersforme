@@ -1,46 +1,65 @@
 'use client'
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+// Import useParams
+import { useRouter, useParams } from 'next/navigation';
 import { Mail } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import SessionCard from '@/components/SessionCard';
 import MessageCard from '@/components/MessageCard';
+import { Caveat } from 'next/font/google';
 
-export default function SessionPage({ params }) {
+const caveat = Caveat({ subsets: ['latin'], weight: '400' });
+
+
+// Hapus 'params' dari props function
+export default function SessionPage() {
+  // Gunakan useParams untuk mendapatkan parameter rute
+  const params = useParams();
+  const id = params.id; // Ekstrak id dari params
+
   const [session, setSession] = useState(null);
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    loadSession();
-    loadMessages();
-  }, [params.id]);
+    // Pastikan 'id' ada sebelum memuat data
+    if (id) {
+      loadSession(id); // Kirim 'id' sebagai argumen
+      loadMessages(id); // Kirim 'id' sebagai argumen
+    }
+  // Tambahkan 'id' sebagai dependency
+  }, [id]);
 
-  const loadSession = async () => {
+  // Modifikasi fungsi untuk menerima 'sessionId'
+  const loadSession = async (sessionId) => {
     try {
       const { data, error } = await supabase
         .from('sessions')
         .select('*')
-        .eq('session_id', params.id)
+        // Gunakan 'sessionId' di sini
+        .eq('session_id', sessionId)
         .single();
 
       if (error) throw error;
       setSession(data);
     } catch (error) {
       console.error('Error loading session:', error);
+      // Mungkin arahkan ke halaman error atau not found
     } finally {
       setLoading(false);
     }
   };
 
-  const loadMessages = async () => {
+  // Modifikasi fungsi untuk menerima 'sessionId'
+  const loadMessages = async (sessionId) => {
     try {
       const { data, error } = await supabase
         .from('messages')
         .select('*')
-        .eq('session_id', params.id)
+        // Gunakan 'sessionId' di sini
+        .eq('session_id', sessionId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -50,6 +69,9 @@ export default function SessionPage({ params }) {
     }
   };
 
+  // ... (sisa kode komponen tetap sama, pastikan menggunakan 'id' jika perlu
+  //      misalnya saat navigasi: router.push(`/write/${id}`) )
+
   const toggleLike = async (messageId, currentLiked) => {
     try {
       const { error } = await supabase
@@ -58,13 +80,19 @@ export default function SessionPage({ params }) {
         .eq('id', messageId);
 
       if (error) throw error;
-      loadMessages();
+      // Muat ulang pesan setelah like diubah
+      if (id) loadMessages(id);
     } catch (error) {
       console.error('Error updating like:', error);
     }
   };
 
-  if (loading) {
+
+  // ... (sisa kode render, gunakan 'id' saat navigasi jika perlu)
+  // Contoh:
+  // onClick={() => router.push(`/write/${id}`)}
+
+   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex items-center justify-center">
         <div className="text-gray-600">Loading...</div>
@@ -124,7 +152,8 @@ export default function SessionPage({ params }) {
         <SessionCard session={session} />
 
         <button
-          onClick={() => router.push(`/write/${params.id}`)}
+          // Gunakan 'id' di sini
+          onClick={() => router.push(`/write/${id}`)}
           className="w-full bg-gradient-to-r from-purple-400 to-pink-400 text-white py-3 rounded-xl font-semibold mb-6 hover:shadow-lg transition-all"
         >
           Write a Letter
